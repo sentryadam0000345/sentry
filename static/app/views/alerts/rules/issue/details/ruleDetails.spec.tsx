@@ -10,7 +10,7 @@ import AlertRuleDetails from './ruleDetails';
 
 describe('AlertRuleDetails', () => {
   const context = initializeOrg({
-    organization: {features: ['mute-alerts']},
+    organization: {features: ['issue-alert-incompatible-rules', 'mute-alerts']},
   });
   const organization = context.organization;
   const project = TestStubs.Project();
@@ -218,7 +218,7 @@ describe('AlertRuleDetails', () => {
       method: 'POST',
     });
     const contextWithQueryParam = initializeOrg({
-      organization: {features: ['mute-alerts']},
+      organization: {features: ['issue-alert-incompatible-rules', 'mute-alerts']},
       router: {
         location: {query: {mute: '1'}},
       },
@@ -237,7 +237,7 @@ describe('AlertRuleDetails', () => {
 
   it('mute button is disabled if no alerts:write permission', async () => {
     const orgWithoutAccess = {
-      features: ['mute-alerts'],
+      features: ['issue-alert-incompatible-rules', 'mute-alerts'],
       access: [],
     };
 

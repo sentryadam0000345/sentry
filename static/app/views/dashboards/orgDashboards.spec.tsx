@@ -10,7 +10,7 @@ import {DashboardState} from 'sentry/views/dashboards/types';
 describe('OrgDashboards', () => {
   const api = new MockApiClient();
   const organization = TestStubs.Organization({
-    features: ['dashboards-basic', 'dashboards-edit'],
+    features: ['dashboards-basic', 'dashboards-edit', 'dashboards-import'],
   });
 
   let initialData;

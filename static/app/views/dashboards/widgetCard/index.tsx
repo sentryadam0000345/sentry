@@ -305,15 +305,6 @@ class WidgetCard extends Component<Props, State> {
                     >
                       <WidgetTitle>{widget.title}</WidgetTitle>
                     </Tooltip>
-                    {widget.description && (
-                      <Tooltip
-                        title={widget.description}
-                        containerDisplayMode="grid"
-                        showOnlyOnOverflow
-                      >
-                        <WidgetDescription>{widget.description}</WidgetDescription>
-                      </Tooltip>
-                    )}
                     <DashboardsMEPConsumer>
                       {({}) => {
                         // TODO(Tele-Team): Re-enable this when we have a better way to determine if the data is transaction only
@@ -504,11 +495,6 @@ const StyledErrorPanel = styled(ErrorPanel)`
 
 const WidgetHeaderDescription = styled('div')`
   display: flex;
-  flex-direction: column;
-  gap: ${space(0.5)};
-`;
-
-export const WidgetDescription = styled('small')`
-  ${p => p.theme.overflowEllipsis}
-  color: ${p => p.theme.gray300};
+  gap: ${space(1)};
+  align-items: center;
 `;

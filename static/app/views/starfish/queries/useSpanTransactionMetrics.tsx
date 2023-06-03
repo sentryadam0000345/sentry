@@ -9,13 +9,10 @@ import {getDateQueryFilter} from 'sentry/views/starfish/utils/getDateQueryFilter
 
 const INTERVAL = 12;
 
-export type SpanTransactionMetrics = {
+type Metric = {
   p50: number;
-  p95: number;
   spm: number;
-  'sum(span.self_time)': number;
   total_time: number;
-  transaction: string;
 };
 
 export const useSpanTransactionMetrics = (
@@ -33,7 +30,6 @@ export const useSpanTransactionMetrics = (
     SELECT
       transaction,
       quantile(0.5)(exclusive_time) as p50,
-      quantile(0.5)(exclusive_time) as p95,
       sum(exclusive_time) as "sum(span.self_time)",
       sum(exclusive_time) as total_time,
       divide(count(), multiply(${INTERVAL}, 60)) as spm
@@ -45,7 +41,7 @@ export const useSpanTransactionMetrics = (
  `
       : '';
 
-  const {isLoading, error, data} = useQuery<SpanTransactionMetrics[]>({
+  const {isLoading, error, data} = useQuery<Metric[]>({
     queryKey: [
       'span-transactions-metrics',
       span?.group_id,

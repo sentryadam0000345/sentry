@@ -6,7 +6,6 @@ from django.urls import reverse
 
 from sentry.api.endpoints.organization_projects_experiment import (
     OrganizationProjectsExperimentEndpoint,
-    fetch_email_username,
 )
 from sentry.models import OrganizationMember, OrganizationMemberTeam, Team
 from sentry.models.project import Project
@@ -26,8 +25,7 @@ class OrganizationProjectsExperimentCreateTest(APITestCase):
     def setUp(self):
         super().setUp()
         self.login_as(user=self.user)
-        self.email_username = fetch_email_username(self.user.email)
-        self.t1 = f"team-{self.email_username}"
+        self.t1 = f"default-team-{self.user}"
         self.mock_experiment_get = patch("sentry.experiments.manager.get", return_value=1).start()
 
     @cached_property
@@ -137,7 +135,7 @@ class OrganizationProjectsExperimentCreateTest(APITestCase):
     def test_consecutive_reqs_adds_team_suffix(self):
         resp1 = self.get_success_response(self.organization.slug, name=self.p1, status_code=201)
         resp2 = self.get_success_response(self.organization.slug, name=self.p2, status_code=201)
-        teams = Team.objects.filter(slug__icontains=self.email_username)
+        teams = Team.objects.filter(slug__icontains=self.t1)
         assert len(teams) == 2
 
         if teams[0].slug == self.t1:

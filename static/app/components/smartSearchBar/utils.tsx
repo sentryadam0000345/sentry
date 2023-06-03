@@ -26,7 +26,6 @@ import {
   SearchItem,
   Shortcut,
   ShortcutType,
-  invalidTypes,
 } from './types';
 import {TagCollection} from 'sentry/types';
 import {FieldKind, FieldValueType, getFieldDefinition} from 'sentry/utils/fields';
@@ -183,7 +182,7 @@ export function createSearchGroups(
 
   const searchGroup: SearchGroup = {
     title: getTitleForType(type),
-    type: invalidTypes.includes(type) ? type : 'header',
+    type: type === ItemType.INVALID_TAG ? type : 'header',
     icon: getIconForTypeAndTag(type, tagName),
     children: [...filteredSearchItems],
   };
@@ -635,27 +634,3 @@ export const getSearchConfigFromCustomPerformanceMetrics = (
   };
   return searchConfig;
 };
-
-/**
- * Gets an invalid group for when the usage of wildcards are not allowed and it is used in the search query.
- * When this group is set, a message with a link to the documentation is displayed to the user in the dropdown.
- */
-export function getAutoCompleteGroupForInvalidWildcard(searchText: string) {
-  return [
-    {
-      searchItems: [
-        {
-          type: ItemType.INVALID_QUERY_WITH_WILDCARD,
-          desc: searchText,
-          callback: () =>
-            window.open(
-              'https://docs.sentry.io/product/sentry-basics/search/searchable-properties/'
-            ),
-        },
-      ],
-      recentSearchItems: [],
-      tagName: searchText,
-      type: ItemType.INVALID_QUERY_WITH_WILDCARD,
-    },
-  ];
-}

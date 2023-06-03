@@ -12,7 +12,3 @@ class FileBlob(AbstractFileBlob):
 
     FILE_BLOB_OWNER_MODEL = FileBlobOwner
     DELETE_FILE_TASK = delete_file_region
-
-    @classmethod
-    def _storage_config(cls):
-        return None  # Rely on get_storage defaults

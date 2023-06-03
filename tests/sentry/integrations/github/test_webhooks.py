@@ -13,10 +13,9 @@ from fixtures.github import (
 from sentry import options
 from sentry.models import Commit, CommitAuthor, GroupLink, Integration, PullRequest, Repository
 from sentry.testutils import APITestCase
-from sentry.testutils.silo import exempt_from_silo_limits, region_silo_test
+from sentry.testutils.silo import region_silo_test
 
 
-@region_silo_test(stable=True)
 class WebhookTest(APITestCase):
     def test_get(self):
 
@@ -65,7 +64,7 @@ class WebhookTest(APITestCase):
         assert response.status_code == 401
 
 
-@region_silo_test(stable=True)
+@region_silo_test
 class PushEventWebhookTest(APITestCase):
     @patch("sentry.integrations.github.client.get_jwt")
     def test_simple(self, mock_get_jwt):
@@ -86,13 +85,12 @@ class PushEventWebhookTest(APITestCase):
         )
 
         future_expires = datetime.now().replace(microsecond=0) + timedelta(minutes=5)
-        with exempt_from_silo_limits():
-            integration = Integration.objects.create(
-                external_id="12345",
-                provider="github",
-                metadata={"access_token": "1234", "expires_at": future_expires.isoformat()},
-            )
-            integration.add_organization(project.organization, self.user)
+        integration = Integration.objects.create(
+            external_id="12345",
+            provider="github",
+            metadata={"access_token": "1234", "expires_at": future_expires.isoformat()},
+        )
+        integration.add_organization(project.organization, self.user)
 
         response = self.client.post(
             path=url,
@@ -143,14 +141,13 @@ class PushEventWebhookTest(APITestCase):
         options.set("github-app.webhook-secret", secret)
 
         future_expires = datetime.now().replace(microsecond=0) + timedelta(minutes=5)
-        with exempt_from_silo_limits():
-            integration = Integration.objects.create(
-                provider="github",
-                external_id="12345",
-                name="octocat",
-                metadata={"access_token": "1234", "expires_at": future_expires.isoformat()},
-            )
-            integration.add_organization(project.organization, self.user)
+        integration = Integration.objects.create(
+            provider="github",
+            external_id="12345",
+            name="octocat",
+            metadata={"access_token": "1234", "expires_at": future_expires.isoformat()},
+        )
+        integration.add_organization(project.organization, self.user)
 
         Repository.objects.create(
             organization_id=project.organization.id,
@@ -221,13 +218,12 @@ class PushEventWebhookTest(APITestCase):
         )
 
         future_expires = datetime.now().replace(microsecond=0) + timedelta(minutes=5)
-        with exempt_from_silo_limits():
-            integration = Integration.objects.create(
-                external_id="12345",
-                provider="github",
-                metadata={"access_token": "1234", "expires_at": future_expires.isoformat()},
-            )
-            integration.add_organization(project.organization, self.user)
+        integration = Integration.objects.create(
+            external_id="12345",
+            provider="github",
+            metadata={"access_token": "1234", "expires_at": future_expires.isoformat()},
+        )
+        integration.add_organization(project.organization, self.user)
 
         org2 = self.create_organization()
         project2 = self.create_project(organization=org2, name="bar")
@@ -240,13 +236,12 @@ class PushEventWebhookTest(APITestCase):
         )
 
         future_expires = datetime.now().replace(microsecond=0) + timedelta(minutes=5)
-        with exempt_from_silo_limits():
-            integration = Integration.objects.create(
-                external_id="99",
-                provider="github",
-                metadata={"access_token": "1234", "expires_at": future_expires.isoformat()},
-            )
-            integration.add_organization(org2, self.user)
+        integration = Integration.objects.create(
+            external_id="99",
+            provider="github",
+            metadata={"access_token": "1234", "expires_at": future_expires.isoformat()},
+        )
+        integration.add_organization(org2, self.user)
 
         response = self.client.post(
             path=url,
@@ -275,7 +270,7 @@ class PushEventWebhookTest(APITestCase):
         assert len(commit_list) == 0
 
 
-@region_silo_test(stable=True)
+@region_silo_test
 class PullRequestEventWebhook(APITestCase):
     def test_opened(self):
         project = self.project  # force creation
@@ -285,14 +280,13 @@ class PullRequestEventWebhook(APITestCase):
         options.set("github-app.webhook-secret", secret)
 
         future_expires = datetime.now().replace(microsecond=0) + timedelta(minutes=5)
-        with exempt_from_silo_limits():
-            integration = Integration.objects.create(
-                provider="github",
-                external_id="12345",
-                name="octocat",
-                metadata={"access_token": "1234", "expires_at": future_expires.isoformat()},
-            )
-            integration.add_organization(project.organization, self.user)
+        integration = Integration.objects.create(
+            provider="github",
+            external_id="12345",
+            name="octocat",
+            metadata={"access_token": "1234", "expires_at": future_expires.isoformat()},
+        )
+        integration.add_organization(project.organization, self.user)
 
         repo = Repository.objects.create(
             organization_id=project.organization.id,
@@ -339,14 +333,13 @@ class PullRequestEventWebhook(APITestCase):
         options.set("github-app.webhook-secret", secret)
 
         future_expires = datetime.now().replace(microsecond=0) + timedelta(minutes=5)
-        with exempt_from_silo_limits():
-            integration = Integration.objects.create(
-                provider="github",
-                external_id="12345",
-                name="octocat",
-                metadata={"access_token": "1234", "expires_at": future_expires.isoformat()},
-            )
-            integration.add_organization(project.organization, self.user)
+        integration = Integration.objects.create(
+            provider="github",
+            external_id="12345",
+            name="octocat",
+            metadata={"access_token": "1234", "expires_at": future_expires.isoformat()},
+        )
+        integration.add_organization(project.organization, self.user)
 
         repo = Repository.objects.create(
             organization_id=project.organization.id,
@@ -389,14 +382,13 @@ class PullRequestEventWebhook(APITestCase):
         options.set("github-app.webhook-secret", secret)
 
         future_expires = datetime.now().replace(microsecond=0) + timedelta(minutes=5)
-        with exempt_from_silo_limits():
-            integration = Integration.objects.create(
-                provider="github",
-                external_id="12345",
-                name="octocat",
-                metadata={"access_token": "1234", "expires_at": future_expires.isoformat()},
-            )
-            integration.add_organization(project.organization, self.user)
+        integration = Integration.objects.create(
+            provider="github",
+            external_id="12345",
+            name="octocat",
+            metadata={"access_token": "1234", "expires_at": future_expires.isoformat()},
+        )
+        integration.add_organization(project.organization, self.user)
 
         repo = Repository.objects.create(
             organization_id=project.organization.id,

@@ -142,6 +142,24 @@ function AddToDashboardModal({
     closeModal();
   }
 
+  // function handleInputDashboard() {
+  //   const pathname =
+  //     selectedDashboardId === NEW_DASHBOARD_ID
+  //       ? `/organizations/${organization.slug}/dashboards/new/widget/new/`
+  //       : `/organizations/${organization.slug}/dashboard/${selectedDashboardId}/widget/new/`;
+
+  //   router.push(
+  //     normalizeUrl({
+  //       pathname,
+  //       query: {
+  //         ...widgetAsQueryParams,
+  //         ...(selectedDashboard ? getSavedPageFilters(selectedDashboard) : {}),
+  //       },
+  //     })
+  //   );
+  //   closeModal();
+  // }
+
   async function handleAddAndStayInDiscover() {
     if (selectedDashboard === null) {
       return;

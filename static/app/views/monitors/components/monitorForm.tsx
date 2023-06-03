@@ -396,7 +396,6 @@ function MonitorForm({
               multiple
               stacked
               inline={false}
-              menuPlacement="auto"
             />
           </InputGroup>
         </Fragment>

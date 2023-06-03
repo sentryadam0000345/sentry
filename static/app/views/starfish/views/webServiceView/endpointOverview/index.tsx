@@ -21,7 +21,6 @@ import {useLocation} from 'sentry/utils/useLocation';
 import useOrganization from 'sentry/utils/useOrganization';
 import usePageFilters from 'sentry/utils/usePageFilters';
 import withApi from 'sentry/utils/withApi';
-import {P95_COLOR} from 'sentry/views/starfish/colours';
 import Chart from 'sentry/views/starfish/components/chart';
 import {FacetInsights} from 'sentry/views/starfish/components/facetInsights';
 import MiniChartPanel from 'sentry/views/starfish/components/miniChartPanel';
@@ -37,7 +36,6 @@ import SpansTable, {
   SpanTrendDataRow,
 } from 'sentry/views/starfish/views/spans/spansTable';
 import {buildQueryConditions} from 'sentry/views/starfish/views/spans/spansView';
-import {DataTitles} from 'sentry/views/starfish/views/spans/types';
 import {SpanGroupBreakdownContainer} from 'sentry/views/starfish/views/webServiceView/spanGroupBreakdownContainer';
 
 const SPANS_TABLE_LIMIT = 5;
@@ -196,11 +194,11 @@ export default function EndpointOverview() {
                     {({results, loading}) => {
                       return (
                         <Fragment>
-                          <MiniChartPanel title={DataTitles.p95}>
+                          <MiniChartPanel title={t('Duration')}>
                             <Chart
                               statsPeriod={(statsPeriod as string) ?? '24h'}
                               height={110}
-                              data={results?.[2] ? [results?.[2]] : []}
+                              data={results?.[1] ? [results?.[1], results?.[2]] : []}
                               start=""
                               end=""
                               loading={loading}
@@ -208,7 +206,7 @@ export default function EndpointOverview() {
                               isLineChart
                               disableXAxis
                               definedAxisTicks={2}
-                              chartColors={[P95_COLOR]}
+                              chartColors={theme.charts.getColorPalette(2)}
                               grid={{
                                 left: '0',
                                 right: '0',

@@ -226,8 +226,7 @@ class SlackActionEndpoint(Endpoint):  # type: ignore
             "status": status_data[0],
         }
 
-        # sub-status only applies to ignored/archived issues
-        if len(status_data) > 1 and status_data[0] == "ignored":
+        if len(status_data) > 1:
             status["substatus"] = status_data[1]
 
         resolve_type = status_data[-1]

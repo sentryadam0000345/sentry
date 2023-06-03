@@ -8,11 +8,9 @@ from sentry.utils.query import RangeQuerySetWrapperWithProgressBar
 
 def backfill_om_is_active(apps, schema_editor):
     OrganizationMember = apps.get_model("sentry", "OrganizationMember")
-    for om in RangeQuerySetWrapperWithProgressBar(
-        OrganizationMember.objects.all().select_related("user")
-    ):
+    for om in RangeQuerySetWrapperWithProgressBar(OrganizationMember.objects.all()):
         # Default is true, so update only on False.
-        if om.user and not om.user.is_active:
+        if not om.user.is_active:
             om.user_is_active = False
             om.save(update_fields=["user_is_active"])
 

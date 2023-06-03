@@ -11,38 +11,47 @@ export const getModuleBreakdown = ({transaction}) => {
  `;
 };
 
-export const getTopModules = ({transaction, datetime}) => {
+export const getTopDomainsActionsAndOp = ({transaction, datetime}) => {
   const {start_timestamp, end_timestamp} = datetimeToClickhouseFilterTimestamps(datetime);
-  return `SELECT module as "span.module", sum(exclusive_time) as "sum(span.duration)"
+  return `SELECT domain, action, span_operation, module, sum(exclusive_time) as sum, uniq(description) as num_spans
    FROM spans_experimental_starfish
-   WHERE ${transaction ? `transaction = '${transaction}' AND` : ''}
-   ${start_timestamp ? `greaterOrEquals(start_timestamp, '${start_timestamp}')` : ''}
+   WHERE span_operation NOT IN ['base.dispatch.execute', 'middleware.django', 'base.dispatch.request']
+   ${transaction ? `AND transaction = '${transaction}'` : ''}
+   ${start_timestamp ? `AND greaterOrEquals(start_timestamp, '${start_timestamp}')` : ''}
    ${end_timestamp ? `AND lessOrEquals(start_timestamp, '${end_timestamp}')` : ''}
-   GROUP BY span.module
-   ORDER BY "sum(span.duration)" desc
+   GROUP BY domain, action, span_operation, module
+   ORDER BY -sum(exclusive_time)
    LIMIT 5
  `;
 };
 
-export const getTopModulesTimeseries = ({transaction, topConditions, datetime}) => {
+export const getTopDomainsActionsAndOpTimeseries = ({
+  transaction,
+  topConditions,
+  datetime,
+}) => {
   const {start_timestamp, end_timestamp} = datetimeToClickhouseFilterTimestamps(datetime);
   return `SELECT
- quantile(0.95)(exclusive_time) as "p95(span.duration)", module as "span.module",
+ quantile(0.50)(exclusive_time) as p50, domain, action, span_operation, module,
  toStartOfInterval(start_timestamp, INTERVAL 12 HOUR) as interval
  FROM default.spans_experimental_starfish
  WHERE greaterOrEquals(start_timestamp, '${start_timestamp}')
  ${end_timestamp ? `AND lessOrEquals(start_timestamp, '${end_timestamp}')` : ''}
  ${topConditions ? `AND (${topConditions})` : ''}
  ${transaction ? `AND transaction = '${transaction}'` : ''}
- GROUP BY interval, span.module
- ORDER BY interval, span.module
+ GROUP BY interval, domain, action, span_operation, module
+ ORDER BY interval, domain, action, span_operation, module
  `;
 };
 
-export const getOtherModulesTimeseries = ({transaction, topConditions, datetime}) => {
+export const getOtherDomainsActionsAndOpTimeseries = ({
+  transaction,
+  topConditions,
+  datetime,
+}) => {
   const {start_timestamp, end_timestamp} = datetimeToClickhouseFilterTimestamps(datetime);
   return `SELECT
- quantile(0.95)(exclusive_time) as "p95(span.duration)",
+ quantile(0.50)(exclusive_time) as p50,
  toStartOfInterval(start_timestamp, INTERVAL 12 HOUR) as interval
  FROM default.spans_experimental_starfish
  WHERE greaterOrEquals(start_timestamp, '${start_timestamp}')
@@ -67,7 +76,7 @@ export const spanThroughput = ({transaction}) => {
 
 export const totalCumulativeTime = ({transaction, datetime}) => {
   const {start_timestamp, end_timestamp} = datetimeToClickhouseFilterTimestamps(datetime);
-  return `SELECT sum(exclusive_time) as "sum(span.duration)"
+  return `SELECT sum(exclusive_time) as sum
    FROM spans_experimental_starfish
    WHERE greaterOrEquals(start_timestamp, '${start_timestamp}')
    ${end_timestamp ? `AND lessOrEquals(start_timestamp, '${end_timestamp}')` : ''}
@@ -88,7 +97,7 @@ export const getTopDomainsAndMethods = ({transaction}) => {
 
 export const getTopHttpDomains = ({transaction}) => {
   return `SELECT
- quantile(0.95)(exclusive_time) as "p95(span.duration)", domain,
+ quantile(0.50)(exclusive_time) as p50, domain,
  toStartOfInterval(start_timestamp, INTERVAL 12 HOUR) as interval
  FROM default.spans_experimental_starfish
  WHERE domain IN (
@@ -108,7 +117,7 @@ export const getTopHttpDomains = ({transaction}) => {
 
 export const getOtherDomains = ({transaction}) => {
   return `SELECT
-  quantile(0.95)(exclusive_time) as "p95(span.duration)",
+  quantile(0.50)(exclusive_time) as p50,
   toStartOfInterval(start_timestamp, INTERVAL 12 HOUR) as interval
   FROM default.spans_experimental_starfish
   WHERE domain NOT IN (
@@ -128,7 +137,7 @@ export const getOtherDomains = ({transaction}) => {
 
 export const getDatabaseTimeSpent = ({transaction}) => {
   return `SELECT
-  quantile(0.95)(exclusive_time) as "p95(span.duration)",
+  quantile(0.50)(exclusive_time) as p50,
   toStartOfInterval(start_timestamp, INTERVAL 12 HOUR) as interval
   FROM default.spans_experimental_starfish
   WHERE startsWith(span_operation, 'db') and span_operation != 'db.redis'

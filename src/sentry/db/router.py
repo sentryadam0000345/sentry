@@ -1,4 +1,3 @@
-import logging
 import sys
 from typing import List
 
@@ -8,8 +7,6 @@ from django.db.utils import ConnectionDoesNotExist
 
 from sentry.db.models.base import Model
 from sentry.silo.base import SiloMode
-
-logger = logging.getLogger(__name__)
 
 
 class SiloRouter:
@@ -42,16 +39,13 @@ class SiloRouter:
     """Whether or not we're operating in a simulated silo environment"""
 
     def __init__(self):
-        self.__table_to_silo = {}
         try:
             # By accessing the connections Django will raise
             # Use `assert` to appease linters
-            assert connections["region"]
             assert connections["control"]
+            assert connections["region"]
             self.__is_simulated = True
-            logging.debug("Using simulated silos")
-        except (AssertionError, ConnectionDoesNotExist) as err:
-            logging.debug("Cannot use simulated silos", extra={"error": str(err)})
+        except (AssertionError, ConnectionDoesNotExist):
             self.__is_simulated = False
 
     def use_simulated(self, value: bool):
@@ -72,7 +66,6 @@ class SiloRouter:
                 return self.__simulated_map[silo_mode]
             if active_mode == silo_mode:
                 return "default"
-
             raise ValueError(
                 f"Cannot resolve table {table} in {silo_mode}. "
                 f"Application silo mode is {active_mode} and simulated silos are not enabled."
@@ -96,9 +89,7 @@ class SiloRouter:
                 # have to scan through models more than once.
                 self.__table_to_silo[table] = self._db_for_model(model)
 
-        # All actively used tables should be in this map, but we also
-        # need to handle tables in migrations that no longer exist.
-        return self.__table_to_silo.get(table, "default")
+        return self.__table_to_silo[table]
 
     def db_for_read(self, model, **hints):
         return self._db_for_model(model)

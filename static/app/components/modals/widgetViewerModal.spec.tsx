@@ -227,15 +227,6 @@ describe('Modals -> WidgetViewerModal', function () {
         expect(screen.getByText('echarts mock')).toBeInTheDocument();
       });
 
-      it('renders description', async function () {
-        mockEvents();
-        await renderModal({
-          initialData,
-          widget: {...mockWidget, description: 'This is a description'},
-        });
-        expect(screen.getByText('This is a description')).toBeInTheDocument();
-      });
-
       it('renders Discover area chart widget viewer', async function () {
         mockEvents();
         const {container} = await renderModal({initialData, widget: mockWidget});

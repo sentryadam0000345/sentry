@@ -11,7 +11,12 @@ import CreateDashboard from 'sentry/views/dashboards/create';
 
 describe('Dashboards > Create', function () {
   const organization = TestStubs.Organization({
-    features: ['dashboards-basic', 'dashboards-edit', 'discover-query'],
+    features: [
+      'dashboards-basic',
+      'dashboards-edit',
+      'discover-query',
+      'dashboards-import',
+    ],
   });
 
   describe('new dashboards', function () {

@@ -13,7 +13,13 @@ import DashboardList from 'sentry/views/dashboards/manage/dashboardList';
 describe('Dashboards > DashboardList', function () {
   let dashboards, widgets, deleteMock, dashboardUpdateMock, createMock;
   const organization = TestStubs.Organization({
-    features: ['global-views', 'dashboards-basic', 'dashboards-edit', 'discover-query'],
+    features: [
+      'global-views',
+      'dashboards-basic',
+      'dashboards-edit',
+      'discover-query',
+      'dashboards-import',
+    ],
     projects: [TestStubs.Project()],
   });
 

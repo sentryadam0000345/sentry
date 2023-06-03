@@ -10,7 +10,7 @@ import {OrganizationContext} from '../organizationContext';
 
 describe('Dashboards > Dashboard', () => {
   const organization = TestStubs.Organization({
-    features: ['dashboards-basic', 'dashboards-edit'],
+    features: ['dashboards-basic', 'dashboards-edit', 'dashboards-import'],
   });
   const mockDashboard = {
     dateCreated: '2021-08-10T21:20:46.798237Z',
@@ -330,7 +330,7 @@ describe('Dashboards > Dashboard', () => {
     it('opens the widget builder when editing with the modal access flag', async function () {
       const testData = initializeOrg({
         organization: {
-          features: ['dashboards-basic', 'dashboards-edit'],
+          features: ['dashboards-basic', 'dashboards-edit', 'dashboards-import'],
         },
       });
       const dashboardWithOneWidget = {

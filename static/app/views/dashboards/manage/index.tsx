@@ -4,6 +4,7 @@ import pick from 'lodash/pick';
 
 import {createDashboard} from 'sentry/actionCreators/dashboards';
 import {addSuccessMessage} from 'sentry/actionCreators/indicator';
+import {openAddToDashboardModal} from 'sentry/actionCreators/modal';
 import {Client} from 'sentry/api';
 import Feature from 'sentry/components/acl/feature';
 import {Alert} from 'sentry/components/alert';
@@ -22,6 +23,7 @@ import {t} from 'sentry/locale';
 import {space} from 'sentry/styles/space';
 import {Organization, SelectValue} from 'sentry/types';
 import {trackAnalytics} from 'sentry/utils/analytics';
+// import eventView from 'sentry/utils/discover/eventView';
 import {decodeScalar} from 'sentry/utils/queryString';
 import withApi from 'sentry/utils/withApi';
 import {normalizeUrl} from 'sentry/utils/withDomainRequired';
@@ -169,6 +171,7 @@ class ManageDashboards extends AsyncView<Props, State> {
 
   renderActions() {
     const activeSort = this.getActiveSort();
+    const {organization} = this.props;
 
     return (
       <StyledActions>
@@ -178,6 +181,43 @@ class ManageDashboards extends AsyncView<Props, State> {
           placeholder={t('Search Dashboards')}
           onSearch={query => this.handleSearch(query)}
         />
+        <Feature
+          organization={organization}
+          features={['organizations:dashboards-import']}
+          renderDisabled={this.renderNoAccess}
+        >
+          <Button
+            data-test-id="dashboardimport"
+            onClick={event => {
+              event.preventDefault();
+              openAddToDashboardModal({
+                organization,
+                // selection: {
+                //   projects: eventView.project,
+                //   environments: eventView.environment,
+                //   datetime: {
+                //     start: eventView.start,
+                //     end: eventView.end,
+                //     period: eventView.statsPeriod,
+                //     utc: eventView.utc,
+                //   },
+                // },
+                // widget: {
+                //   title: query?.name ?? eventView?.name ?? '',
+                //   displayType,
+                //   queries: [defaultWidgetQuery],
+                //   interval: eventView.interval,
+                // },
+              });
+            }}
+            size="sm"
+            priority="primary"
+            icon={<IconAdd isCircled />}
+          >
+            {t('Import Dashboard')}
+          </Button>
+        </Feature>
+
         <CompactSelect
           triggerProps={{prefix: t('Sort By')}}
           value={activeSort.value}

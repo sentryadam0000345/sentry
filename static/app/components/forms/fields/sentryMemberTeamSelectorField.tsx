@@ -9,10 +9,11 @@ import {useTeams} from 'sentry/utils/useTeams';
 import FormContext from '../formContext';
 
 // XXX(epurkhiser): This is wrong, it should not be inheriting these props
-import SelectField, {SelectFieldProps} from './selectField';
+import {InputFieldProps} from './inputField';
+import SelectField from './selectField';
 
 // projects can be passed as a direct prop as well
-export interface RenderFieldProps extends SelectFieldProps<any> {
+export interface RenderFieldProps extends InputFieldProps {
   avatarSize?: number;
   projects?: Project[];
   /**

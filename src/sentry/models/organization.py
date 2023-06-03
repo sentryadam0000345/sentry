@@ -240,10 +240,6 @@ class Organization(Model, SnowflakeIdMixin):
 
     snowflake_redis_key = "organization_snowflake_key"
 
-    def save_with_update_outbox(self, *args, **kwargs):
-        super().save(*args, **kwargs)
-        Organization.outbox_for_update(self.id).save()
-
     def save(self, *args, **kwargs):
         slugify_target = None
         if not self.slug:
@@ -256,16 +252,12 @@ class Organization(Model, SnowflakeIdMixin):
                 slugify_target = slugify_target.lower().replace("_", "-").strip("-")
                 slugify_instance(self, slugify_target, reserved=RESERVED_ORGANIZATION_SLUGS)
 
-        # Run the save + outbox queueing in a transaction to ensure the control-silo is notified
-        # when a change is made to the organization model.
         if SENTRY_USE_SNOWFLAKE:
             self.save_with_snowflake_id(
-                self.snowflake_redis_key,
-                lambda: self.save_with_update_outbox(*args, **kwargs),
+                self.snowflake_redis_key, lambda: super(Organization, self).save(*args, **kwargs)
             )
         else:
-            with transaction.atomic():
-                self.save_with_update_outbox(*args, **kwargs)
+            super().save(*args, **kwargs)
 
     @classmethod
     def reserve_snowflake_id(cls):

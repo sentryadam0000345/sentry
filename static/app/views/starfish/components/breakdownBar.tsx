@@ -14,9 +14,9 @@ import {getUtcDateString} from 'sentry/utils/dates';
 import {useQuery} from 'sentry/utils/queryClient';
 import usePageFilters from 'sentry/utils/usePageFilters';
 import {
-  getOtherModulesTimeseries,
-  getTopModules,
-  getTopModulesTimeseries,
+  getOtherDomainsActionsAndOpTimeseries,
+  getTopDomainsActionsAndOp,
+  getTopDomainsActionsAndOpTimeseries,
   totalCumulativeTime,
 } from 'sentry/views/starfish/views/webServiceView/queries';
 import {WebServiceBreakdownChart} from 'sentry/views/starfish/views/webServiceView/webServiceBreakdownChart';
@@ -91,7 +91,7 @@ function FacetBreakdownBar({transaction: maybeTransaction}: Props) {
     queryKey: ['webServiceSpanGrouping', transaction, selection.datetime],
     queryFn: () =>
       fetch(
-        `${HOST}/?query=${getTopModules({
+        `${HOST}/?query=${getTopDomainsActionsAndOp({
           transaction,
           datetime: selection.datetime,
         })}`
@@ -146,7 +146,7 @@ function FacetBreakdownBar({transaction: maybeTransaction}: Props) {
     queryKey: ['topSpanGroupTimeseries', transaction, topConditions, selection.datetime],
     queryFn: () =>
       fetch(
-        `${HOST}/?query=${getTopModulesTimeseries({
+        `${HOST}/?query=${getTopDomainsActionsAndOpTimeseries({
           transaction,
           topConditions,
           datetime: selection.datetime,
@@ -165,7 +165,7 @@ function FacetBreakdownBar({transaction: maybeTransaction}: Props) {
     ],
     queryFn: () =>
       fetch(
-        `${HOST}/?query=${getOtherModulesTimeseries({
+        `${HOST}/?query=${getOtherDomainsActionsAndOpTimeseries({
           transaction,
           topConditions,
           datetime: selection.datetime,

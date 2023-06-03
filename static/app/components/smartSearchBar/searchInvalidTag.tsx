@@ -6,10 +6,9 @@ import {space} from 'sentry/styles/space';
 type Props = {
   message: React.ReactNode;
   docLink?: string;
-  highlightMessage?: React.ReactNode;
 };
 
-export function SearchInvalidTag({message, highlightMessage, docLink}: Props) {
+export function SearchInvalidTag({message, docLink}: Props) {
   return (
     <Invalid
       onClick={event => {
@@ -21,9 +20,7 @@ export function SearchInvalidTag({message, highlightMessage, docLink}: Props) {
       }}
     >
       <span>{message}</span>
-      <Highlight>
-        {highlightMessage ?? t('See all searchable properties in the docs.')}
-      </Highlight>
+      <Highlight>{t('See all searchable properties in the docs.')}</Highlight>
     </Invalid>
   );
 }

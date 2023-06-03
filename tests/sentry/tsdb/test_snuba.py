@@ -165,13 +165,7 @@ class SnubaTSDBTest(OutcomesSnubaTest):
         ]:
             # Query SnubaTSDB
             response = self.db.get_range(
-                tsdb_model,
-                [self.organization.id],
-                self.start_time,
-                self.now,
-                granularity,
-                None,
-                tenant_ids={"referrer": "tests", "organization_id": 1},
+                tsdb_model, [self.organization.id], self.start_time, self.now, granularity, None
             )
 
             # Assert that the response has values set for the times we expect, and nothing more
@@ -314,13 +308,7 @@ class SnubaTSDBTest(OutcomesSnubaTest):
             (TSDBModel.project_total_blacklisted, 10, floor_to_10s_epoch, 4, 5),
         ]:
             response = self.db.get_range(
-                tsdb_model,
-                [self.project.id],
-                self.start_time,
-                self.now,
-                granularity,
-                None,
-                tenant_ids={"referrer": "tests", "organization_id": 1},
+                tsdb_model, [self.project.id], self.start_time, self.now, granularity, None
             )
 
             # Assert that the response has values set for the times we expect, and nothing more
@@ -460,7 +448,6 @@ class SnubaTSDBTest(OutcomesSnubaTest):
                 self.now,
                 granularity,
                 None,
-                tenant_ids={"referrer": "tests", "organization_id": 123},
             )
 
             # Assert that the response has values set for the times we expect, and nothing more

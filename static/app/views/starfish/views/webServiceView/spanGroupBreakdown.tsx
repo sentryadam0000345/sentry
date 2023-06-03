@@ -11,12 +11,12 @@ import {t, tct} from 'sentry/locale';
 import {space} from 'sentry/styles/space';
 import {Series} from 'sentry/types/echarts';
 import {getUtcDateString} from 'sentry/utils/dates';
-import {tooltipFormatterUsingAggregateOutputType} from 'sentry/utils/discover/charts';
 import {NumberContainer} from 'sentry/utils/discover/styles';
 import {formatPercentage} from 'sentry/utils/formatters';
 import usePageFilters from 'sentry/utils/usePageFilters';
 import TopResultsIndicator from 'sentry/views/discover/table/topResultsIndicator';
 import {RightAlignedCell} from 'sentry/views/performance/landing/widgets/components/selectableList';
+import {getSegmentLabelForTable} from 'sentry/views/starfish/components/breakdownBar';
 import Chart from 'sentry/views/starfish/components/chart';
 import {DataRow} from 'sentry/views/starfish/views/webServiceView/spanGroupBreakdownContainer';
 
@@ -55,7 +55,7 @@ export function SpanGroupBreakdown({
     <Fragment>
       <ChartPadding>
         <Header>
-          <ChartLabel>{t('App Time Breakdown (p95)')}</ChartLabel>
+          <ChartLabel>{'p50 of Span Groups With Highest Cumulative Times'}</ChartLabel>
         </Header>
         <Chart
           statsPeriod="24h"
@@ -74,10 +74,6 @@ export function SpanGroupBreakdown({
           definedAxisTicks={6}
           stacked
           aggregateOutputFormat="duration"
-          tooltipFormatterOptions={{
-            valueFormatter: value =>
-              tooltipFormatterUsingAggregateOutputType(value, 'duration'),
-          }}
         />
       </ChartPadding>
       <ListContainer>
@@ -89,18 +85,20 @@ export function SpanGroupBreakdown({
             start && end
               ? {start: getUtcDateString(start), end: getUtcDateString(end), utc}
               : {statsPeriod: period};
-          ['span.module'].forEach(key => {
+          ['span_operation', 'action', 'domain'].forEach(key => {
             if (group[key] !== undefined && group[key] !== null) {
               spansLinkQueryParams[key] = group[key];
             }
           });
 
           const spansLink =
-            group['span.module'] === 'other'
+            group.module === 'other'
               ? `/starfish/spans/`
               : `/starfish/spans/?${qs.stringify(spansLinkQueryParams)}`;
           return (
-            <StyledLineItem key={`${group['span.module']}`}>
+            <StyledLineItem
+              key={`${group.span_operation}-${group.action}-${group.domain}`}
+            >
               <ListItemContainer>
                 <StyledTopResultsIndicator
                   count={Math.max(transformedData.length - 1, 1)}
@@ -117,15 +115,20 @@ export function SpanGroupBreakdown({
                 />
                 <TextAlignLeft>
                   <Link to={spansLink}>
-                    <TextOverflow>{group['span.module']}</TextOverflow>
+                    <TextOverflow>
+                      {getSegmentLabelForTable(
+                        group.span_operation,
+                        group.action,
+                        group.domain
+                      )}
+                    </TextOverflow>
                   </Link>
                 </TextAlignLeft>
                 <RightAlignedCell>
                   <Tooltip
                     title={t(
-                      '%s time spent on %s',
-                      formatPercentage(row.cumulativeTime / totalValues, 1),
-                      group['span.module']
+                      'This group of spans account for %s of the cumulative time on your web service',
+                      formatPercentage(row.cumulativeTime / totalValues, 1)
                     )}
                     containerDisplayMode="block"
                     position="top"

@@ -391,7 +391,7 @@ class IssueRuleEditor extends AsyncView<Props, State> {
     }
     // we currently don't have a way to parse objects from query params, so this method is POST for now
     this.api
-      .requestPromise(`/projects/${organization.slug}/${project.slug}/rules/preview/`, {
+      .requestPromise(`/projects/${organization.slug}/${project.slug}/rules/preview`, {
         method: 'POST',
         includeAllArgs: true,
         query: {
@@ -446,20 +446,22 @@ class IssueRuleEditor extends AsyncView<Props, State> {
 
   // As more incompatible combinations are added, we will need a more generic way to check for incompatibility.
   checkIncompatibleRuleDebounced = debounce(() => {
-    const {conditionIndices, filterIndices} = findIncompatibleRules(this.state.rule);
-    if (
-      !this.trackIncompatibleAnalytics &&
-      (conditionIndices !== null || filterIndices !== null)
-    ) {
-      this.trackIncompatibleAnalytics = true;
-      trackAnalytics('edit_alert_rule.incompatible_rule', {
-        organization: this.props.organization,
+    if (this.props.organization.features.includes('issue-alert-incompatible-rules')) {
+      const {conditionIndices, filterIndices} = findIncompatibleRules(this.state.rule);
+      if (
+        !this.trackIncompatibleAnalytics &&
+        (conditionIndices !== null || filterIndices !== null)
+      ) {
+        this.trackIncompatibleAnalytics = true;
+        trackAnalytics('edit_alert_rule.incompatible_rule', {
+          organization: this.props.organization,
+        });
+      }
+      this.setState({
+        incompatibleConditions: conditionIndices,
+        incompatibleFilters: filterIndices,
       });
     }
-    this.setState({
-      incompatibleConditions: conditionIndices,
-      incompatibleFilters: filterIndices,
-    });
   }, 500);
 
   onPreviewCursor: CursorHandler = (cursor, _1, _2, direction) => {
@@ -903,9 +905,7 @@ class IssueRuleEditor extends AsyncView<Props, State> {
           value={this.getTeamId()}
           project={project}
           onChange={this.handleOwnerChange}
-          teamFilter={(team: Team) =>
-            team.isMember || team.id === ownerId || team.access.includes('team:admin')
-          }
+          teamFilter={(team: Team) => team.isMember || team.id === ownerId}
           useId
           includeUnassigned
           disabled={disabled}

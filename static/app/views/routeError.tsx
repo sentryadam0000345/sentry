@@ -61,7 +61,7 @@ function RouteError({error, disableLogSentry, disableReport, project}: Props) {
       } catch (e) {
         Sentry.withScope(scope => {
           enrichScopeContext(scope);
-          scope.setExtra('cannotSetMessage', true);
+          Sentry.captureException(e);
         });
       }
     }

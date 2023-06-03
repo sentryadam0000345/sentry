@@ -1,13 +1,13 @@
 import {initializeOrg} from 'sentry-test/initializeOrg';
 import {render, screen, waitFor} from 'sentry-test/reactTestingLibrary';
 
-import ProjectsStore from 'sentry/stores/projectsStore';
 import {ProjectInstallPlatform} from 'sentry/views/projectInstall/platform';
 
 describe('ProjectInstallPlatform', function () {
   it('should render NotFound if no matching integration/platform', async function () {
     const routeParams = {
       projectId: TestStubs.Project().slug,
+      platform: 'lua',
     };
     const {organization, router, route, project, routerContext} = initializeOrg({
       router: {
@@ -21,19 +21,7 @@ describe('ProjectInstallPlatform', function () {
     MockApiClient.addMockResponse({
       method: 'GET',
       url: '/organizations/org-slug/projects/',
-      body: [{...project, platform: 'lua'}],
-    });
-
-    MockApiClient.addMockResponse({
-      method: 'GET',
-      url: '/projects/org-slug/project-slug/rules/',
-      body: [],
-    });
-
-    MockApiClient.addMockResponse({
-      method: 'GET',
-      url: '/projects/org-slug/project-slug/',
-      body: [{...project, platform: 'lua'}],
+      body: [project],
     });
 
     render(
@@ -54,9 +42,10 @@ describe('ProjectInstallPlatform', function () {
     expect(await screen.findByText('Page Not Found')).toBeInTheDocument();
   });
 
-  it('should redirect to neutral docs if no matching platform', async function () {
+  it('should redirect to if no matching platform', async function () {
     const routeParams = {
       projectId: TestStubs.Project().slug,
+      platform: 'other',
     };
 
     const {organization, router, route, project, routerContext} = initializeOrg({
@@ -68,25 +57,10 @@ describe('ProjectInstallPlatform', function () {
       },
     });
 
-    // this is needed because we don't handle a loading state in the UI
-    ProjectsStore.loadInitialData([{...project, platform: 'other'}]);
-
     MockApiClient.addMockResponse({
       method: 'GET',
       url: '/organizations/org-slug/projects/',
-      body: [{...project, platform: 'other'}],
-    });
-
-    MockApiClient.addMockResponse({
-      method: 'GET',
-      url: '/projects/org-slug/project-slug/rules/',
-      body: [],
-    });
-
-    MockApiClient.addMockResponse({
-      method: 'GET',
-      url: '/projects/org-slug/project-slug/',
-      body: [{...project, platform: 'other'}],
+      body: [project],
     });
 
     render(

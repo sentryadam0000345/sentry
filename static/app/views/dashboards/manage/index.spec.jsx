@@ -11,11 +11,12 @@ const FEATURES = [
   'dashboards-basic',
   'dashboards-edit',
   'discover-query',
+  'dashboards-import',
 ];
 
 describe('Dashboards > Detail', function () {
   const mockUnauthorizedOrg = TestStubs.Organization({
-    features: ['global-views', 'dashboards-basic', 'discover-query'],
+    features: ['global-views', 'dashboards-basic', 'discover-query', 'dashboards-import'],
   });
 
   const mockAuthorizedOrg = TestStubs.Organization({

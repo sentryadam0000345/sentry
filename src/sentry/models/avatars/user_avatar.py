@@ -2,11 +2,11 @@ from django.db import models
 
 from sentry.db.models import BaseManager, FlexibleForeignKey, control_silo_only_model
 
-from . import ControlAvatarBase
+from . import AvatarBase
 
 
 @control_silo_only_model
-class UserAvatar(ControlAvatarBase):
+class UserAvatar(AvatarBase):
     """
     A UserAvatar associates a User with their avatar photo File
     and contains their preferences for avatar type.

@@ -120,7 +120,6 @@ export function generateWebServiceEventView(
   organization: Organization
 ) {
   const {query} = location;
-  const percentile = '0.95';
   const hasStartAndEnd = query.start && query.end;
   const middleTimestamp = getMiddleTimestamp({
     start: decodeScalar(query.start),
@@ -131,13 +130,13 @@ export function generateWebServiceEventView(
         : decodeScalar(query.statsPeriod),
   });
 
-  const deltaColName = `equation|(percentile_range(transaction.duration,${percentile},lessOrEquals,${middleTimestamp})-percentile_range(transaction.duration,0.95,greater,${middleTimestamp}))/percentile_range(transaction.duration,${percentile},lessOrEquals,${middleTimestamp})`;
+  const deltaColName = `equation|(percentile_range(transaction.duration,0.50,lessOrEquals,${middleTimestamp})-percentile_range(transaction.duration,0.50,greater,${middleTimestamp}))/percentile_range(transaction.duration,0.50,lessOrEquals,${middleTimestamp})`;
   let orderby = decodeScalar(query.sort, `-${TIME_SPENT_IN_SERVICE}`);
   const isDescending = orderby.startsWith('-');
   const rawOrderby = trimStart(orderby, '-');
   if (
     rawOrderby.startsWith(
-      `equation|(percentile_range(transaction.duration,${percentile},lessOrEquals,`
+      'equation|(percentile_range(transaction.duration,0.50,lessOrEquals,'
     )
   ) {
     orderby = isDescending ? `-${deltaColName}` : deltaColName;
@@ -147,14 +146,14 @@ export function generateWebServiceEventView(
     'transaction',
     'http.method',
     'tpm()',
-    'p95()',
+    'p50()',
     deltaColName,
     'count_if(http.status_code,greaterOrEquals,500)',
     TIME_SPENT_IN_SERVICE,
     'total.transaction_duration',
     'sum(transaction.duration)',
-    `percentile_range(transaction.duration,${percentile},lessOrEquals,${middleTimestamp})`,
-    `percentile_range(transaction.duration,${percentile},greater,${middleTimestamp})`,
+    `percentile_range(transaction.duration,0.50,lessOrEquals,${middleTimestamp})`,
+    `percentile_range(transaction.duration,0.50,greater,${middleTimestamp})`,
   ];
 
   const savedQuery: NewQuery = {

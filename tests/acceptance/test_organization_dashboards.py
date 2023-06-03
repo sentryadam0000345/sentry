@@ -28,6 +28,7 @@ FEATURE_NAMES = [
     "organizations:discover-query",
     "organizations:dashboards-basic",
     "organizations:global-views",
+    "organizations:dashboards-import",
 ]
 
 EDIT_FEATURE = ["organizations:dashboards-edit"]

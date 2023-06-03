@@ -23,7 +23,13 @@ jest.mock('sentry/components/charts/worldMapChart', () => ({
 
 describe('Dashboards > Detail', function () {
   const organization = TestStubs.Organization({
-    features: ['global-views', 'dashboards-basic', 'dashboards-edit', 'discover-query'],
+    features: [
+      'global-views',
+      'dashboards-basic',
+      'dashboards-edit',
+      'discover-query',
+      'dashboards-import',
+    ],
   });
   const projects = [TestStubs.Project()];
 
@@ -145,7 +151,12 @@ describe('Dashboards > Detail', function () {
       });
       initialData = initializeOrg({
         organization: TestStubs.Organization({
-          features: ['global-views', 'dashboards-basic', 'discover-query'],
+          features: [
+            'global-views',
+            'dashboards-basic',
+            'discover-query',
+            'dashboards-import',
+          ],
           projects: [TestStubs.Project()],
         }),
       });
@@ -477,6 +488,7 @@ describe('Dashboards > Detail', function () {
             'dashboards-basic',
             'dashboards-edit',
             'discover-query',
+            'dashboards-import',
           ],
           projects: [TestStubs.Project()],
         }),
@@ -907,6 +919,7 @@ describe('Dashboards > Detail', function () {
             'dashboards-basic',
             'dashboards-edit',
             'discover-query',
+            'dashboards-import',
           ],
         }),
         router: {
@@ -968,6 +981,7 @@ describe('Dashboards > Detail', function () {
             'dashboards-basic',
             'dashboards-edit',
             'discover-query',
+            'dashboards-import',
           ],
         }),
         router: {
@@ -1012,6 +1026,7 @@ describe('Dashboards > Detail', function () {
             'dashboards-basic',
             'dashboards-edit',
             'discover-query',
+            'dashboards-import',
           ],
         }),
         router: {
@@ -1066,6 +1081,7 @@ describe('Dashboards > Detail', function () {
             'dashboards-basic',
             'dashboards-edit',
             'discover-query',
+            'dashboards-import',
           ],
         }),
         router: {
@@ -1126,6 +1142,7 @@ describe('Dashboards > Detail', function () {
             'dashboards-edit',
             'discover-basic',
             'discover-query',
+            'dashboards-import',
           ],
         }),
         router: {
@@ -1182,6 +1199,7 @@ describe('Dashboards > Detail', function () {
             'dashboards-basic',
             'dashboards-edit',
             'discover-query',
+            'dashboards-import',
           ],
         }),
         router: {
@@ -1219,6 +1237,7 @@ describe('Dashboards > Detail', function () {
             'dashboards-basic',
             'dashboards-edit',
             'discover-query',
+            'dashboards-import',
           ],
         }),
         router: {
@@ -1263,6 +1282,7 @@ describe('Dashboards > Detail', function () {
             'dashboards-basic',
             'dashboards-edit',
             'discover-query',
+            'dashboards-import',
           ],
         }),
         router: {
@@ -1319,6 +1339,7 @@ describe('Dashboards > Detail', function () {
             'dashboards-basic',
             'dashboards-edit',
             'discover-query',
+            'dashboards-import',
           ],
         }),
         router: {
@@ -1379,6 +1400,7 @@ describe('Dashboards > Detail', function () {
             'dashboards-edit',
             'discover-basic',
             'discover-query',
+            'dashboards-import',
           ],
         }),
         router: {

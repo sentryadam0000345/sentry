@@ -4,38 +4,32 @@ import * as qs from 'query-string';
 
 import GridEditable, {
   COL_WIDTH_UNDEFINED,
-  GridColumnHeader,
+  GridColumnHeader as Column,
 } from 'sentry/components/gridEditable';
 import Link from 'sentry/components/links/link';
 import Truncate from 'sentry/components/truncate';
 import {Series} from 'sentry/types/echarts';
 import {formatPercentage} from 'sentry/utils/formatters';
 import {useLocation} from 'sentry/utils/useLocation';
-import {P95_COLOR, THROUGHPUT_COLOR} from 'sentry/views/starfish/colours';
+import {DURATION_COLOR, THROUGHPUT_COLOR} from 'sentry/views/starfish/colours';
 import Sparkline, {
   generateHorizontalLine,
 } from 'sentry/views/starfish/components/sparkline';
 import type {Span} from 'sentry/views/starfish/queries/types';
-import {
-  ApplicationMetrics,
-  useApplicationMetrics,
-} from 'sentry/views/starfish/queries/useApplicationMetrics';
-import {
-  SpanTransactionMetrics,
-  useSpanTransactionMetrics,
-} from 'sentry/views/starfish/queries/useSpanTransactionMetrics';
+import {useApplicationMetrics} from 'sentry/views/starfish/queries/useApplicationMetrics';
+import {useSpanTransactionMetrics} from 'sentry/views/starfish/queries/useSpanTransactionMetrics';
 import {useSpanTransactionMetricSeries} from 'sentry/views/starfish/queries/useSpanTransactionMetricSeries';
 import {useSpanTransactions} from 'sentry/views/starfish/queries/useSpanTransactions';
-import {DataTitles} from 'sentry/views/starfish/views/spans/types';
-import {
-  DurationTrendCell,
-  TimeSpentCell,
-} from 'sentry/views/starfish/views/spanSummaryPage/spanBaselineTable';
+
+type Metric = {
+  p50: number;
+  spm: number;
+};
 
 type Row = {
   count: number;
   metricSeries: Record<string, Series>;
-  metrics: SpanTransactionMetrics;
+  metrics: Metric;
   transaction: string;
 };
 
@@ -44,9 +38,6 @@ type Props = {
   onClickTransaction?: (row: Row) => void;
   openSidebar?: boolean;
 };
-
-export type Keys = 'transaction' | 'epm()' | 'p95(transaction.duration)' | 'timeSpent';
-export type TableColumnHeader = GridColumnHeader<Keys>;
 
 export function SpanTransactionsTable({span, openSidebar, onClickTransaction}: Props) {
   const location = useLocation();
@@ -65,7 +56,7 @@ export function SpanTransactionsTable({span, openSidebar, onClickTransaction}: P
   const spanTransactionsWithMetrics = spanTransactions.map(row => {
     return {
       ...row,
-      timeSpent: formatPercentage(
+      app_impact: formatPercentage(
         spanTransactionMetrics[row.transaction]?.['sum(span.self_time)'] /
           applicationMetrics['sum(span.duration)']
       ),
@@ -74,11 +65,11 @@ export function SpanTransactionsTable({span, openSidebar, onClickTransaction}: P
     };
   });
 
-  const renderHeadCell = (column: TableColumnHeader) => {
+  const renderHeadCell = column => {
     return <span>{column.name}</span>;
   };
 
-  const renderBodyCell = (column: TableColumnHeader, row: Row) => {
+  const renderBodyCell = (column, row: Row) => {
     return (
       <BodyCell
         span={span}
@@ -86,7 +77,6 @@ export function SpanTransactionsTable({span, openSidebar, onClickTransaction}: P
         row={row}
         openSidebar={openSidebar}
         onClickTransactionName={onClickTransaction}
-        applicationMetrics={applicationMetrics}
       />
     );
   };
@@ -107,21 +97,14 @@ export function SpanTransactionsTable({span, openSidebar, onClickTransaction}: P
 }
 
 type CellProps = {
-  column: TableColumnHeader;
+  column: Column;
   row: Row;
   span: Span;
   onClickTransactionName?: (row: Row) => void;
   openSidebar?: boolean;
 };
 
-function BodyCell({
-  span,
-  column,
-  row,
-  openSidebar,
-  applicationMetrics,
-  onClickTransactionName,
-}: CellProps & {applicationMetrics: ApplicationMetrics}) {
+function BodyCell({span, column, row, openSidebar, onClickTransactionName}: CellProps) {
   if (column.key === 'transaction') {
     return (
       <TransactionCell
@@ -134,28 +117,12 @@ function BodyCell({
     );
   }
 
-  if (column.key === 'p95(transaction.duration)') {
-    return (
-      <DurationTrendCell
-        duration={row.metrics?.p50}
-        color={P95_COLOR}
-        durationSeries={row.metricSeries?.p50}
-      />
-    );
+  if (column.key === 'p50(transaction.duration)') {
+    return <P50Cell span={span} row={row} column={column} />;
   }
 
   if (column.key === 'epm()') {
     return <EPMCell span={span} row={row} column={column} />;
-  }
-
-  if (column.key === 'timeSpent') {
-    return (
-      <TimeSpentCell
-        formattedTimeSpent={row[column.key]}
-        totalAppTime={applicationMetrics['sum(span.duration)']}
-        totalSpanTime={row.metrics?.total_time}
-      />
-    );
   }
 
   return <span>{row[column.key]}</span>;
@@ -171,6 +138,26 @@ function TransactionCell({span, column, row}: CellProps) {
       >
         <Truncate value={row[column.key]} maxLength={75} />
       </Link>
+    </Fragment>
+  );
+}
+
+function P50Cell({row}: CellProps) {
+  const theme = useTheme();
+  const p50 = row.metrics?.p50;
+  const p50Series = row.metricSeries?.p50;
+
+  return (
+    <Fragment>
+      {p50Series ? (
+        <Sparkline
+          color={DURATION_COLOR}
+          series={p50Series}
+          markLine={
+            p50 ? generateHorizontalLine(`${p50.toFixed(2)}`, p50, theme) : undefined
+          }
+        />
+      ) : null}
     </Fragment>
   );
 }
@@ -195,7 +182,7 @@ function EPMCell({row}: CellProps) {
   );
 }
 
-const COLUMN_ORDER: TableColumnHeader[] = [
+const COLUMN_ORDER = [
   {
     key: 'transaction',
     name: 'In Endpoint',
@@ -207,13 +194,13 @@ const COLUMN_ORDER: TableColumnHeader[] = [
     width: COL_WIDTH_UNDEFINED,
   },
   {
-    key: 'p95(transaction.duration)',
-    name: DataTitles.p95,
+    key: 'p50(transaction.duration)',
+    name: 'Duration (P50)',
     width: COL_WIDTH_UNDEFINED,
   },
   {
-    key: 'timeSpent',
-    name: DataTitles.timeSpent,
+    key: 'app_impact',
+    name: 'App Impact',
     width: COL_WIDTH_UNDEFINED,
   },
 ];

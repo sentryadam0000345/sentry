@@ -13,7 +13,6 @@ import ButtonBar from 'sentry/components/buttonBar';
 import {normalizeDateTimeParams} from 'sentry/components/organizations/pageFilters/parse';
 import {
   FilterType,
-  InvalidReason,
   ParseResult,
   parseSearch,
   SearchConfig,
@@ -68,7 +67,6 @@ import {
   createSearchGroups,
   filterKeysFromQuery,
   generateOperatorEntryMap,
-  getAutoCompleteGroupForInvalidWildcard,
   getDateTagAutocompleteGroups,
   getSearchConfigFromCustomPerformanceMetrics,
   getSearchGroupWithItemMarkedActive,
@@ -1462,13 +1460,6 @@ class SmartSearchBar extends Component<DefaultProps & Props, State> {
           searchText = '';
         }
 
-        if (cursorToken.invalid?.type === InvalidReason.WILDCARD_NOT_ALLOWED) {
-          const groups = getAutoCompleteGroupForInvalidWildcard(searchText);
-          this.updateAutoCompleteStateMultiHeader(groups);
-
-          return;
-        }
-
         const fieldDefinition = this.props.fieldDefinitionGetter(tagName);
         const isDate = fieldDefinition?.valueType === FieldValueType.DATE;
 
@@ -1482,7 +1473,6 @@ class SmartSearchBar extends Component<DefaultProps & Props, State> {
 
         const valueGroup = await this.generateValueAutocompleteGroup(tagName, searchText);
         const autocompleteGroups = valueGroup ? [valueGroup] : [];
-
         // show operator group if at beginning of value
         if (cursor === node.location.start.offset) {
           const opGroup = generateOpAutocompleteGroup(getValidOps(cursorToken), tagName);
@@ -1524,19 +1514,16 @@ class SmartSearchBar extends Component<DefaultProps & Props, State> {
     }
 
     const cursorSearchTerm = this.cursorSearchTerm;
-
     if (cursorToken.type === Token.FreeText && cursorSearchTerm) {
-      const groups: AutocompleteGroup[] | null =
-        cursorToken.invalid?.type === InvalidReason.WILDCARD_NOT_ALLOWED
-          ? getAutoCompleteGroupForInvalidWildcard(cursorSearchTerm.searchTerm)
-          : [await this.generateTagAutocompleteGroup(cursorSearchTerm.searchTerm)];
+      const autocompleteGroups = [
+        await this.generateTagAutocompleteGroup(cursorSearchTerm.searchTerm),
+      ];
 
       if (cursor === this.cursorPosition) {
         this.setState({
           searchTerm: cursorSearchTerm.searchTerm,
         });
-
-        this.updateAutoCompleteStateMultiHeader(groups);
+        this.updateAutoCompleteStateMultiHeader(autocompleteGroups);
       }
       return;
     }

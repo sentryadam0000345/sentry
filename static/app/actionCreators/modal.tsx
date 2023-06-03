@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import type {ModalTypes} from 'sentry/components/globalModal';
 import type {CreateNewIntegrationModalOptions} from 'sentry/components/modals/createNewIntegrationModal';
 import type {CreateReleaseIntegrationModalOptions} from 'sentry/components/modals/createReleaseIntegrationModal';
@@ -261,6 +262,8 @@ export async function openWidgetBuilderOverwriteModal(
 export async function openAddToDashboardModal(options) {
   const mod = await import('sentry/components/modals/widgetBuilder/addToDashboardModal');
   const {default: Modal, modalCss} = mod;
+
+  console.log('MOD ' + mod);
 
   openModal(deps => <Modal {...deps} {...options} />, {
     closeEvents: 'escape-key',

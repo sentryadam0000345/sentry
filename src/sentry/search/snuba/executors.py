@@ -55,7 +55,6 @@ from sentry.utils.snuba import SnubaQueryParams, aliased_query_params, bulk_raw_
 class PrioritySortWeights(TypedDict):
     log_level: int
     has_stacktrace: int
-    relative_volume: int
     event_halflife_hours: int
     issue_halflife_hours: int
     v2: bool
@@ -65,7 +64,6 @@ class PrioritySortWeights(TypedDict):
 DEFAULT_PRIORITY_WEIGHTS: PrioritySortWeights = {
     "log_level": 0,
     "has_stacktrace": 0,
-    "relative_volume": 0,
     "event_halflife_hours": 4,
     "issue_halflife_hours": 24 * 7,
     "v2": False,
@@ -75,7 +73,6 @@ DEFAULT_PRIORITY_WEIGHTS: PrioritySortWeights = {
 V2_DEFAULT_PRIORITY_WEIGHTS: PrioritySortWeights = {
     "log_level": 0,
     "has_stacktrace": 0,
-    "relative_volume": 1,
     "event_halflife_hours": 12,
     "issue_halflife_hours": 4,
     "v2": False,
@@ -224,7 +221,6 @@ class AbstractQueryExecutor(metaclass=ABCMeta):
         end: datetime,
         having: Sequence[Sequence[Any]],
         aggregate_kwargs: Optional[PrioritySortWeights] = None,
-        replace_better_priority_aggregation: Optional[bool] = False,
     ) -> list[Any]:
         extra_aggregations = self.dependency_aggregations.get(sort_field, [])
         required_aggregations = set([sort_field, "total"] + extra_aggregations)
@@ -235,9 +231,6 @@ class AbstractQueryExecutor(metaclass=ABCMeta):
         aggregations = []
         for alias in required_aggregations:
             aggregation = self.aggregation_defs[alias]
-            # TODO: remove this hack once we can properly support better_priority sort on issue platform dataset
-            if replace_better_priority_aggregation and alias == "better_priority":
-                aggregation = self.aggregation_defs["force_last"]  # type:ignore[call-overload]
             if callable(aggregation):
                 if aggregate_kwargs:
                     aggregation = aggregation(start, end, aggregate_kwargs.get(alias, {}))
@@ -289,18 +282,7 @@ class AbstractQueryExecutor(metaclass=ABCMeta):
                 else:
                     conditions.append(converted_filter)
 
-        if (
-            sort_field == "better_priority"
-            and group_category is not GroupCategory.ERROR.value
-            and features.has("organizations:issue-list-better-priority-sort", organization)
-        ):
-            aggregations = self._prepare_aggregations(
-                sort_field, start, end, having, aggregate_kwargs, True
-            )
-        else:
-            aggregations = self._prepare_aggregations(
-                sort_field, start, end, having, aggregate_kwargs
-            )
+        aggregations = self._prepare_aggregations(sort_field, start, end, having, aggregate_kwargs)
 
         if cursor is not None:
             having.append((sort_field, ">=" if cursor.is_prev else "<=", cursor.value))
@@ -529,20 +511,18 @@ def better_priority_aggregation(
     )
     event_agg_rank = f"divide({event_agg_numerator}, {event_agg_denominator})"  # values from [0, 1]
 
-    aggregate_issue_score = f"greatest({min_score}, divide({issue_age_weight}, pow(2, least({max_pow}, divide({issue_age_hours}, {issue_halflife_hours})))))"
-
     v2 = aggregate_kwargs["v2"]
 
     if not v2:
         aggregate_event_score = f"greatest({min_score}, sum(divide({event_agg_rank}, pow(2, least({max_pow}, divide({event_age_hours}, {event_halflife_hours}))))))"
+        aggregate_issue_score = f"greatest({min_score}, divide({issue_age_weight}, pow(2, least({max_pow}, divide({issue_age_hours}, {issue_halflife_hours})))))"
         return [f"multiply({aggregate_event_score}, {aggregate_issue_score})", ""]
     else:
         #  * apply log to event score summation to clamp the contribution of event scores to a reasonable maximum
         #  * add an extra 'relative volume score' (# of events in past 60 mins / # of events in the past 7 days)
         #    to factor in the volume of events that recently were fired versus the past. This will up-rank issues
         #    that are more recently active as a function of the overall amount of events grouped to that issue
-        #  * add a configurable weight to 'relative volume score'
-        #  * conditionally normalize all the scores so the range of values sweeps from 0.0 to 1.0
+        #  * conditionally normalize all the scores so the range of values sweeps from 0.0 to 1.0 -
 
         # aggregate_event_score:
         #
@@ -568,20 +548,16 @@ def better_priority_aggregation(
         avg_hourly_event_count_last_7_days = (
             "countIf(lessOrEquals(minus(now(), timestamp), 604800))"  # 604800 = 3600 * 24 * 7
         )
-        relative_volume_weight = aggregate_kwargs["relative_volume"]  # [0, 10]
-        max_relative_volume_weight = 10
-        if relative_volume_weight > max_relative_volume_weight:
-            relative_volume_weight = max_relative_volume_weight
         relative_volume_score = (
-            f"divide({event_count_60_mins}, plus({avg_hourly_event_count_last_7_days}, 1))"
+            f"divide(plus({event_count_60_mins}, 1), plus({avg_hourly_event_count_last_7_days}, 1))"
         )
-        scaled_relative_volume_score = f"divide(multiply({relative_volume_weight}, {relative_volume_score}), {max_relative_volume_weight})"
+        aggregate_issue_score = f"greatest({min_score}, divide({issue_age_weight}, pow(2, least({max_pow}, divide({issue_age_hours}, {issue_halflife_hours})))))"
 
         normalize = aggregate_kwargs["norm"]
 
         if not normalize:
             return [
-                f"multiply(multiply({aggregate_issue_score}, greatest({min_score}, {aggregate_event_score})), greatest({min_score}, {scaled_relative_volume_score}))",
+                f"multiply(multiply({aggregate_issue_score}, {aggregate_event_score}), {relative_volume_score})",
                 "",
             ]
         else:
@@ -594,7 +570,7 @@ def better_priority_aggregation(
             #            2^(x/k)
             normalized_aggregate_issue_score = aggregate_issue_score  # already ranges from 1 to 0
             normalized_relative_volume_score = (
-                scaled_relative_volume_score  # already normalized since it's a percentage
+                relative_volume_score  # already normalized since it's a percentage
             )
 
             # aggregate_event_score ranges from [0, +inf], as the amount of events grouped to this issue
@@ -639,10 +615,6 @@ class PostgresSnubaQueryExecutor(AbstractQueryExecutor):
         "total": ["uniq", ISSUE_FIELD_NAME],
         "user_count": ["uniq", "tags[sentry:user]"],
         "better_priority": better_priority_aggregation,
-        "force_last": [
-            "least(min(organization_id), 0)",
-            "",
-        ],  # hack aggregation to force issue-platform sort scores to be zero
     }
 
     @property

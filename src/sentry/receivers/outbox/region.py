@@ -33,7 +33,6 @@ from sentry.services.hybrid_cloud.organizationmember_mapping import (
     organizationmember_mapping_service,
 )
 from sentry.signals import member_joined
-from sentry.types.region import get_local_region
 
 
 @receiver(process_region_outbox, sender=OutboxCategory.AUDIT_LOG_EVENT)
@@ -109,8 +108,8 @@ def process_organization_updates(object_identifier: int, **kwds: Any):
         organization_mapping_service.delete(organization_id=object_identifier)
         return
 
-    update = update_organization_mapping_from_instance(org, get_local_region())
-    organization_mapping_service.upsert(organization_id=org.id, update=update)
+    update = update_organization_mapping_from_instance(org)
+    organization_mapping_service.update(organization_id=org.id, update=update)
 
 
 @receiver(process_region_outbox, sender=OutboxCategory.PROJECT_UPDATE)

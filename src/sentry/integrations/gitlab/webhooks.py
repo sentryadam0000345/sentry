@@ -1,5 +1,4 @@
 import logging
-from typing import Any, Mapping
 
 from dateutil.parser import parse as parse_date
 from django.db import IntegrityError, transaction
@@ -8,15 +7,14 @@ from django.utils import timezone
 from django.utils.crypto import constant_time_compare
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
+from django.views.generic import View
 from rest_framework.request import Request
 from rest_framework.response import Response
 
-from sentry.api.base import Endpoint, region_silo_endpoint
 from sentry.integrations.utils.scope import clear_tags_and_context
-from sentry.models import Commit, CommitAuthor, Organization, PullRequest, Repository
+from sentry.models import Commit, CommitAuthor, PullRequest, Repository
 from sentry.plugins.providers import IntegrationRepositoryProvider
 from sentry.services.hybrid_cloud.integration import integration_service
-from sentry.services.hybrid_cloud.integration.model import RpcIntegration
 from sentry.services.hybrid_cloud.organization import organization_service
 from sentry.utils import json
 
@@ -26,14 +24,10 @@ PROVIDER_NAME = "integrations:gitlab"
 
 
 class Webhook:
-    def __call__(
-        self, integration: RpcIntegration, organization: Organization, event: Mapping[str, Any]
-    ):
+    def __call__(self, integration, organization, event):
         raise NotImplementedError
 
-    def get_repo(
-        self, integration: RpcIntegration, organization: Organization, event: Mapping[str, Any]
-    ):
+    def get_repo(self, integration, organization, event):
         """
         Given a webhook payload, get the associated Repository record.
 
@@ -57,7 +51,7 @@ class Webhook:
             return None
         return repo
 
-    def update_repo_data(self, repo: Repository, event: Mapping[str, Any]):
+    def update_repo_data(self, repo, event):
         """
         Given a webhook payload, update stored repo data if needed.
 
@@ -84,9 +78,7 @@ class MergeEventWebhook(Webhook):
     See https://docs.gitlab.com/ee/user/project/integrations/webhooks.html#merge-request-events
     """
 
-    def __call__(
-        self, integration: RpcIntegration, organization: Organization, event: Mapping[str, Any]
-    ):
+    def __call__(self, integration, organization, event):
         repo = self.get_repo(integration, organization, event)
         if repo is None:
             return
@@ -147,9 +139,7 @@ class PushEventWebhook(Webhook):
     See https://docs.gitlab.com/ee/user/project/integrations/webhooks.html#push-events
     """
 
-    def __call__(
-        self, integration: RpcIntegration, organization: Organization, event: Mapping[str, Any]
-    ):
+    def __call__(self, integration, organization, event):
         repo = self.get_repo(integration, organization, event)
         if repo is None:
             return
@@ -194,10 +184,7 @@ class PushEventWebhook(Webhook):
                 pass
 
 
-@region_silo_endpoint
-class GitlabWebhookEndpoint(Endpoint):
-    authentication_classes = ()
-    permission_classes = ()
+class GitlabWebhookEndpoint(View):
     provider = "gitlab"
 
     _handlers = {"Push Hook": PushEventWebhook, "Merge Request Hook": MergeEventWebhook}

@@ -3,39 +3,36 @@ import {useTheme} from '@emotion/react';
 
 import GridEditable, {
   COL_WIDTH_UNDEFINED,
-  GridColumnHeader,
+  GridColumnHeader as Column,
 } from 'sentry/components/gridEditable';
-import {Tooltip} from 'sentry/components/tooltip';
 import {Series} from 'sentry/types/echarts';
 import {formatPercentage} from 'sentry/utils/formatters';
 import {useLocation} from 'sentry/utils/useLocation';
-import {P95_COLOR, THROUGHPUT_COLOR} from 'sentry/views/starfish/colours';
+import {DURATION_COLOR, THROUGHPUT_COLOR} from 'sentry/views/starfish/colours';
 import {SpanDescription} from 'sentry/views/starfish/components/spanDescription';
 import Sparkline, {
   generateHorizontalLine,
 } from 'sentry/views/starfish/components/sparkline';
 import type {Span} from 'sentry/views/starfish/queries/types';
-import {
-  ApplicationMetrics,
-  useApplicationMetrics,
-} from 'sentry/views/starfish/queries/useApplicationMetrics';
-import {SpanMetrics, useSpanMetrics} from 'sentry/views/starfish/queries/useSpanMetrics';
+import {useApplicationMetrics} from 'sentry/views/starfish/queries/useApplicationMetrics';
+import {useSpanMetrics} from 'sentry/views/starfish/queries/useSpanMetrics';
 import {useSpanMetricSeries} from 'sentry/views/starfish/queries/useSpanMetricSeries';
-import {DataTitles, getTooltip} from 'sentry/views/starfish/views/spans/types';
 
 type Props = {
   span: Span;
 };
 
-type Row = {
-  description: string;
-  metricSeries: Record<string, Series>;
-  metrics: SpanMetrics;
-  timeSpent: string;
+type Metric = {
+  p50: number;
+  spm: number;
 };
 
-export type Keys = 'description' | 'epm()' | 'p95(span.self_time)' | 'timeSpent';
-export type TableColumnHeader = GridColumnHeader<Keys>;
+type Row = {
+  app_impact: string;
+  description: string;
+  metricSeries: Record<string, Series>;
+  metrics: Metric;
+};
 
 export function SpanBaselineTable({span}: Props) {
   const location = useLocation();
@@ -48,15 +45,8 @@ export function SpanBaselineTable({span}: Props) {
     return <span>{column.name}</span>;
   };
 
-  const renderBodyCell = (column: TableColumnHeader, row: Row) => {
-    return (
-      <BodyCell
-        span={span}
-        column={column}
-        row={row}
-        applicationMetrics={applicationMetrics}
-      />
-    );
+  const renderBodyCell = (column, row: Row) => {
+    return <BodyCell span={span} column={column} row={row} />;
   };
 
   return (
@@ -67,7 +57,7 @@ export function SpanBaselineTable({span}: Props) {
           description: span.description ?? '',
           metrics: spanMetrics,
           metricSeries: spanMetricSeries,
-          timeSpent: formatPercentage(
+          app_impact: formatPercentage(
             spanMetrics.total_time / applicationMetrics['sum(span.duration)']
           ),
         },
@@ -83,44 +73,19 @@ export function SpanBaselineTable({span}: Props) {
   );
 }
 
-type CellProps = {
-  column: TableColumnHeader;
-  row: Row;
-  span: Span;
-};
+type CellProps = {column: Column; row: Row; span: Span};
 
-function BodyCell({
-  span,
-  column,
-  row,
-  applicationMetrics,
-}: CellProps & {applicationMetrics: ApplicationMetrics}) {
+function BodyCell({span, column, row}: CellProps) {
   if (column.key === 'description') {
     return <DescriptionCell span={span} row={row} column={column} />;
   }
 
-  if (column.key === 'p95(span.self_time)') {
-    return (
-      <DurationTrendCell
-        duration={row.metrics?.p95}
-        durationSeries={row.metricSeries?.p95}
-        color={P95_COLOR}
-      />
-    );
+  if (column.key === 'p50(span.self_time)') {
+    return <P50Cell span={span} row={row} column={column} />;
   }
 
   if (column.key === 'epm()') {
     return <EPMCell span={span} row={row} column={column} />;
-  }
-
-  if (column.key === 'timeSpent') {
-    return (
-      <TimeSpentCell
-        formattedTimeSpent={row[column.key]}
-        totalSpanTime={row.metrics.total_time}
-        totalAppTime={applicationMetrics['sum(span.duration)']}
-      />
-    );
   }
 
   return <span>{row[column.key]}</span>;
@@ -130,31 +95,19 @@ function DescriptionCell({span}: CellProps) {
   return <SpanDescription span={span} />;
 }
 
-export function DurationTrendCell({
-  duration,
-  durationSeries,
-  color,
-}: {
-  color: string;
-  duration: number;
-  durationSeries?: Series;
-}) {
+function P50Cell({row}: CellProps) {
   const theme = useTheme();
+  const p50 = row.metrics?.p50;
+  const p50Series = row.metricSeries?.p50;
 
   return (
     <Fragment>
-      {durationSeries ? (
+      {p50Series ? (
         <Sparkline
-          color={color}
-          series={durationSeries}
+          color={DURATION_COLOR}
+          series={p50Series}
           markLine={
-            duration
-              ? generateHorizontalLine(
-                  `${(duration / 1000).toFixed(2)} s`,
-                  duration,
-                  theme
-                )
-              : undefined
+            p50 ? generateHorizontalLine(`${p50.toFixed(2)}`, p50, theme) : undefined
           }
         />
       ) : null}
@@ -182,24 +135,7 @@ function EPMCell({row}: CellProps) {
   );
 }
 
-export function TimeSpentCell({
-  formattedTimeSpent,
-  totalSpanTime,
-  totalAppTime,
-}: {
-  formattedTimeSpent: string;
-  totalAppTime: number;
-  totalSpanTime: number;
-}) {
-  const toolTip = getTooltip('timeSpent', totalSpanTime, totalAppTime);
-  return (
-    <span>
-      <Tooltip title={toolTip}>{formattedTimeSpent}</Tooltip>
-    </span>
-  );
-}
-
-const COLUMN_ORDER: TableColumnHeader[] = [
+const COLUMN_ORDER = [
   {
     key: 'description',
     name: 'Description',
@@ -211,13 +147,13 @@ const COLUMN_ORDER: TableColumnHeader[] = [
     width: COL_WIDTH_UNDEFINED,
   },
   {
-    key: 'p95(span.self_time)',
-    name: DataTitles.p95,
+    key: 'p50(span.self_time)',
+    name: 'Duration (P50)',
     width: COL_WIDTH_UNDEFINED,
   },
   {
-    key: 'timeSpent',
-    name: DataTitles.timeSpent,
+    key: 'app_impact',
+    name: 'App Impact',
     width: COL_WIDTH_UNDEFINED,
   },
 ];

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import {useEffect, useState} from 'react';
 import {browserHistory, RouteComponentProps} from 'react-router';
 import pick from 'lodash/pick';
@@ -105,18 +106,18 @@ type FeatureProps = {
 };
 
 export function DashboardBasicFeature({organization, children}: FeatureProps) {
-  const renderDisabled = () => (
-    <Layout.Page withPadding>
-      <Alert type="warning">{t("You don't have access to this feature")}</Alert>
-    </Layout.Page>
-  );
+  // const renderDisabled = () => (
+  //   <Layout.Page withPadding>
+  //     <Alert type="warning">{t("You don't have access to this feature")}</Alert>
+  //   </Layout.Page>
+  // );
 
   return (
     <Feature
       hookName="feature-disabled:dashboards-page"
-      features={['organizations:dashboards-basic']}
+      features={['organizations:dashboards-basic', 'organizations:dashboards-import']}
       organization={organization}
-      renderDisabled={renderDisabled}
+      // renderDisabled={renderDisabled}
     >
       {children}
     </Feature>

@@ -318,7 +318,13 @@ function Sidebar({location, organization}: Props) {
   const dashboards = hasOrganization && (
     <Feature
       hookName="feature-disabled:dashboards-sidebar-item"
-      features={['discover', 'discover-query', 'dashboards-basic', 'dashboards-edit']}
+      features={[
+        'discover',
+        'discover-query',
+        'dashboards-basic',
+        'dashboards-edit',
+        'dashboards-import',
+      ]}
       organization={organization}
       requireAll={false}
     >

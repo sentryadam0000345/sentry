@@ -20,7 +20,6 @@ import {space} from 'sentry/styles/space';
 import {Environment, Organization, Project, SelectValue} from 'sentry/types';
 import {getDisplayName} from 'sentry/utils/environment';
 import {isActiveSuperuser} from 'sentry/utils/isActiveSuperuser';
-import withApi from 'sentry/utils/withApi';
 import withProjects from 'sentry/utils/withProjects';
 import WizardField from 'sentry/views/alerts/rules/metric/wizardField';
 import {
@@ -577,4 +576,4 @@ const FormRow = styled('div')<{columns?: number; noMargin?: boolean}>`
     `}
 `;
 
-export default withApi(withProjects(RuleConditionsForm));
+export default withProjects(RuleConditionsForm);

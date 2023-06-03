@@ -68,11 +68,7 @@ class InternalIntegrationProxyEndpointTest(APITestCase):
         mock_response.content = str({"some": "data"}).encode("utf-8")
         mock_response.status_code = 400
         mock_response.reason = "Bad Request"
-        mock_response.headers = {
-            "Content-Type": "application/json",
-            "X-Arbitrary": "Value",
-            PROXY_SIGNATURE_HEADER: "123",
-        }
+        mock_response.headers = {"Content-Type": "application/json"}
 
         mock_client.base_url = "https://example.com/api"
         mock_client.authorize_request = MagicMock(side_effect=lambda req: req)
@@ -87,9 +83,7 @@ class InternalIntegrationProxyEndpointTest(APITestCase):
         assert proxy_response.content == mock_response.content
         assert proxy_response.status_code == mock_response.status_code
         assert proxy_response._reason_phrase == mock_response.reason
-        assert proxy_response["Content-Type"] == mock_response.headers["Content-Type"]
-        assert proxy_response["X-Arbitrary"] == mock_response.headers["X-Arbitrary"]
-        assert proxy_response.get(PROXY_SIGNATURE_HEADER) is None
+        assert proxy_response.get("Content-Type", "") == mock_response.headers.get("Content-Type")
 
     @override_settings(SENTRY_SUBNET_SECRET=secret, SILO_MODE=SiloMode.CONTROL)
     def test__validate_sender(self):

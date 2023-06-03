@@ -7,7 +7,6 @@
     ".volta/**"
   ],
 
-  "stubPath": "fixtures/stubs-for-mypy",
   "typeCheckingMode": "off",
   "reportMissingImports": "none",
   "reportUndefinedVariable": "none",

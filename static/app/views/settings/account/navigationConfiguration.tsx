@@ -76,7 +76,7 @@ function getConfiguration({organization}: ConfigParams): NavigationSection[] {
         },
         {
           path: `${pathPrefix}/api/auth-tokens/`,
-          title: t('User Auth Tokens'),
+          title: t('Auth Tokens'),
           description: t(
             "Authentication tokens allow you to perform actions against the Sentry API on behalf of your account. They're the easiest way to get started using the API."
           ),

@@ -415,7 +415,6 @@ class DeleteMonitorTest(MonitorTestCase):
 
     def test_simple(self):
         monitor = self._create_monitor()
-        old_slug = monitor.slug
 
         self.get_success_response(
             self.organization.slug, monitor.slug, method="DELETE", status_code=202
@@ -423,8 +422,6 @@ class DeleteMonitorTest(MonitorTestCase):
 
         monitor = Monitor.objects.get(id=monitor.id)
         assert monitor.status == ObjectStatus.PENDING_DELETION
-        # Slug should update on deletion
-        assert monitor.slug != old_slug
         # ScheduledDeletion only available in control silo
         assert ScheduledDeletion.objects.filter(object_id=monitor.id, model_name="Monitor").exists()
 

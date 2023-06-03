@@ -12,7 +12,7 @@ import {zeroFillSeries} from 'sentry/views/starfish/utils/zeroFillSeries';
 
 const INTERVAL = 12;
 
-export type Metric = {
+type Metric = {
   count: number;
   interval: string;
   p50: number;

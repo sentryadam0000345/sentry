@@ -219,17 +219,7 @@ class SnubaTSDBTest(TestCase, SnubaTestCase):
             ],
         }
 
-        assert (
-            self.db.get_range(
-                TSDBModel.group,
-                [],
-                dts[0],
-                dts[-1],
-                rollup=3600,
-                tenant_ids={"referrer": "test", "organization_id": 1},
-            )
-            == {}
-        )
+        assert self.db.get_range(TSDBModel.group, [], dts[0], dts[-1], rollup=3600) == {}
 
     def test_range_releases(self):
         dts = [self.now + timedelta(hours=i) for i in range(4)]
@@ -403,7 +393,6 @@ class SnubaTSDBTest(TestCase, SnubaTestCase):
             self.now,
             self.now + timedelta(hours=4),
             rollup=3600,
-            tenant_ids={"referrer": "r", "organization_id": 1234},
         ) == {
             self.proj1group1.id: 2  # 2 unique users overall
         }
@@ -414,7 +403,6 @@ class SnubaTSDBTest(TestCase, SnubaTestCase):
             self.now,
             self.now,
             rollup=3600,
-            tenant_ids={"referrer": "r", "organization_id": 1234},
         ) == {
             self.proj1group1.id: 1  # Only 1 unique user in the first hour
         }
@@ -425,7 +413,6 @@ class SnubaTSDBTest(TestCase, SnubaTestCase):
             self.now,
             self.now + timedelta(hours=4),
             rollup=3600,
-            tenant_ids={"referrer": "r", "organization_id": 1234},
         ) == {self.proj1.id: 2}
 
         assert (
@@ -435,7 +422,6 @@ class SnubaTSDBTest(TestCase, SnubaTestCase):
                 self.now,
                 self.now + timedelta(hours=4),
                 rollup=3600,
-                tenant_ids={"referrer": "r", "organization_id": 1234},
             )
             == {}
         )
@@ -704,7 +690,6 @@ class SnubaTSDBGroupProfilingTest(TestCase, SnubaTestCase, SearchIssueTestMixin)
                 series[0],
                 series[-1],
                 rollup=None,
-                tenant_ids={"referrer": "test", "organization_id": 1},
             ) == {group_info.group.id: [(ts, 1) for ts in series_ts]}
 
     def test_range_groups_mult(self):
@@ -733,7 +718,6 @@ class SnubaTSDBGroupProfilingTest(TestCase, SnubaTestCase, SearchIssueTestMixin)
             dts[0],
             dts[-1],
             rollup=3600,
-            tenant_ids={"referrer": "test", "organization_id": 1},
         ) == {
             group.id: [
                 (timestamp(dts[0]), 6),
@@ -773,7 +757,6 @@ class SnubaTSDBGroupProfilingTest(TestCase, SnubaTestCase, SearchIssueTestMixin)
             dts[0],
             dts[-1],
             rollup=3600,
-            tenant_ids={"referrer": "test", "organization_id": 1},
         ) == {
             group.id: [
                 (timestamp(dts[0]), len(ids)),
@@ -792,7 +775,6 @@ class SnubaTSDBGroupProfilingTest(TestCase, SnubaTestCase, SearchIssueTestMixin)
             dts[0],
             dts[-1],
             rollup=3600,
-            tenant_ids={"referrer": "test", "organization_id": 1},
         ) == {
             self.proj1group1.id: [
                 (timestamp(dts[0]), 3),
@@ -807,17 +789,7 @@ class SnubaTSDBGroupProfilingTest(TestCase, SnubaTestCase, SearchIssueTestMixin)
                 (timestamp(dts[3]), 3),
             ],
         }
-        assert (
-            self.db.get_range(
-                TSDBModel.group_generic,
-                [],
-                dts[0],
-                dts[-1],
-                rollup=3600,
-                tenant_ids={"referrer": "test", "organization_id": 1},
-            )
-            == {}
-        )
+        assert self.db.get_range(TSDBModel.group_generic, [], dts[0], dts[-1], rollup=3600) == {}
 
     def test_get_distinct_counts_totals_users(self):
         assert self.db.get_distinct_counts_totals(
@@ -826,7 +798,6 @@ class SnubaTSDBGroupProfilingTest(TestCase, SnubaTestCase, SearchIssueTestMixin)
             self.now,
             self.now + timedelta(hours=4),
             rollup=3600,
-            tenant_ids={"referrer": "test", "organization_id": 1},
         ) == {
             self.proj1group1.id: 5  # 5 unique users overall
         }
@@ -837,7 +808,6 @@ class SnubaTSDBGroupProfilingTest(TestCase, SnubaTestCase, SearchIssueTestMixin)
             self.now,
             self.now,
             rollup=3600,
-            tenant_ids={"referrer": "test", "organization_id": 1},
         ) == {
             self.proj1group1.id: 1  # Only 1 unique user in the first hour
         }
@@ -849,7 +819,6 @@ class SnubaTSDBGroupProfilingTest(TestCase, SnubaTestCase, SearchIssueTestMixin)
                 self.now,
                 self.now + timedelta(hours=4),
                 rollup=3600,
-                tenant_ids={"referrer": "test", "organization_id": 1},
             )
             == {}
         )
@@ -860,7 +829,6 @@ class SnubaTSDBGroupProfilingTest(TestCase, SnubaTestCase, SearchIssueTestMixin)
             keys=[self.proj1group1.id, self.proj1group2.id],
             start=self.now,
             end=self.now + timedelta(hours=4),
-            tenant_ids={"referrer": "test", "organization_id": 1},
         ) == {self.proj1group1.id: 12, self.proj1group2.id: 12}
 
     def test_get_data_or_conditions_parsed(self):
@@ -883,14 +851,12 @@ class SnubaTSDBGroupProfilingTest(TestCase, SnubaTestCase, SearchIssueTestMixin)
             conditions=conditions,
             start=self.now,
             end=self.now + timedelta(hours=4),
-            tenant_ids={"referrer": "test", "organization_id": 1},
         )
         data2 = self.db.get_data(
             model=TSDBModel.group_generic,
             keys=[self.proj1group1.id, self.proj1group2.id],
             start=self.now,
             end=self.now + timedelta(hours=4),
-            tenant_ids={"referrer": "test", "organization_id": 1},
         )
 
         # the above queries should return the same data since all groups either have:

@@ -163,8 +163,6 @@ class InternalIntegrationProxyEndpoint(Endpoint):
             # XXX: Can be added in Django 3.2
             # headers=raw_response.headers
         )
-        valid_headers = clean_outbound_headers(raw_response.headers)
-        for header, value in valid_headers.items():
-            response[header] = value
+        response.headers = raw_response.headers
         metrics.incr("hc.integration_proxy.success")
         return response

@@ -164,7 +164,7 @@ def assemble_dif(project_id, name, checksum, chunks, debug_id=None, **kwargs):
         )
     finally:
         if delete_file:
-            file.delete()  # pyright: ignore
+            file.delete()  # type:ignore
 
 
 class AssembleArtifactsError(Exception):

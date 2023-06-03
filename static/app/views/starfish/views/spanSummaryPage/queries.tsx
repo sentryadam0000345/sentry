@@ -124,7 +124,6 @@ export const useQuerySpansInTransaction = (options: {
     formatted_desc: string;
     module: 'http' | 'db' | 'cache' | 'none';
     p50: number;
-    p95: number;
     span_operation: string;
   }[]
 > => {
@@ -137,7 +136,6 @@ export const useQuerySpansInTransaction = (options: {
       SELECT
       count() AS count,
       quantile(0.5)(exclusive_time) as p50,
-      quantile(0.5)(exclusive_time) as p95,
       span_operation,
       action,
       module,
@@ -256,19 +254,19 @@ const getSpanSamplesQuery = ({
   user,
   populationType,
   datetime,
-  p95,
+  p50,
 }: {
   groupId;
   transactionName;
   user;
   datetime?: DateTimeObject;
-  p95?: number;
+  p50?: number;
   populationType?: SamplePopulationType;
 }) => {
   const {start_timestamp, end_timestamp} = datetimeToClickhouseFilterTimestamps(datetime);
 
   return `
-    SELECT transaction_id, transaction, description, user, domain, span_id, sum(exclusive_time) as exclusive_time, abs(minus(exclusive_time, ${p95})) as diff
+    SELECT transaction_id, transaction, description, user, domain, span_id, sum(exclusive_time) as exclusive_time, abs(minus(exclusive_time, ${p50})) as diff
     FROM spans_experimental_starfish
     WHERE group_id = '${groupId}'
     ${transactionName ? `AND transaction = '${transactionName}'` : ''}

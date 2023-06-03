@@ -8,7 +8,7 @@ import {FILTER_MASK} from 'sentry/constants';
 import ConfigStore from 'sentry/stores/configStore';
 import {Frame, PlatformType} from 'sentry/types';
 import {Image} from 'sentry/types/debugImage';
-import {EntryRequest, EntryThreads, EntryType, Event} from 'sentry/types/event';
+import {EntryRequest} from 'sentry/types/event';
 import {defined} from 'sentry/utils';
 import {fileExtensionToPlatform, getFileExtension} from 'sentry/utils/fileExtension';
 
@@ -250,11 +250,4 @@ export function isStacktraceNewestFirst() {
     default:
       return true;
   }
-}
-
-export function getCurrentThread(event: Event) {
-  const threads = event.entries?.find(entry => entry.type === EntryType.THREADS) as
-    | EntryThreads
-    | undefined;
-  return threads?.data.values?.find(thread => thread.current);
 }
